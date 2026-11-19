@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>আমার বাংলাদেশ — Amar Bangladesh 3D Life Simulator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div id="game-root">
+    <canvas id="game-canvas"></canvas>
+
+    <!-- HUD Layer -->
+    <div id="hud" class="hidden">
+      <!-- Top-Left Circular Minimap -->
+      <div id="minimap-container" aria-label="Minimap">
+        <div class="minimap-ring">
+          <canvas id="minimap-canvas" width="240" height="240"></canvas>
+          <div class="minimap-compass">N</div>
+          <button id="btn-expand-map" class="minimap-expand-btn" title="বড় ম্যাপ দেখুন (Full Map - M)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+          </button>
+        </div>
+        <div id="location-pill" class="location-pill">মেস রুম • Mess Room</div>
+      </div>
+
+      <!-- Top-Center World Info Bar (Read-only automatic environment indicators) -->
+      <div id="top-bar">
+        <div class="hud-chip" id="time-chip" title="স্বয়ংক্রিয় সময় (Automatic Time)">
+          <span id="time-icon">☀️</span>
+          <span id="time-text">বিকেল • 4:30 PM</span>
+        </div>
+        <div class="hud-chip" id="weather-chip" title="স্বয়ংক্রিয় আবহাওয়া (Automatic Weather)">
+          <span id="weather-icon">☀️</span>
+          <span id="weather-text">পরিষ্কার</span>
+        </div>
+        <div class="hud-chip power-on" id="power-chip" title="স্বয়ংক্রিয় বিদ্যুৎ ব্যবস্থা (Automatic Power)">
+          <span id="power-icon">⚡</span>
+          <span id="power-text">বিদ্যুৎ আছে</span>
+        </div>
+        <div class="hud-chip" id="temp-chip" title="তাপমাত্রা (Temperature)">
+          <span>🌡️</span>
+          <span id="temp-text">29°C</span>
+        </div>
+        <div class="hud-chip money-chip" id="money-chip" title="টাকা (Taka)">
+          <span>৳</span>
+          <span id="money-text">160</span>
+        </div>
+      </div>
+
+      <!-- Top-Right Status & Utility Controls (No manual time/rain/power toggles) -->
+      <div id="top-right-panel">
+        <div class="stats-card">
+          <div class="stat-row">
+            <span class="stat-label" title="শক্তি (Energy)">⚡ শক্তি</span>
+            <div class="stat-bar"><div id="bar-energy" class="stat-fill energy" style="width: 88%"></div></div>
+            <span id="val-energy" class="stat-val">88%</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label" title="স্বস্তি (Comfort)">🌿 স্বস্তি</span>
+            <div class="stat-bar"><div id="bar-comfort" class="stat-fill comfort" style="width: 84%"></div></div>
+            <span id="val-comfort" class="stat-val">84%</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label" title="ফোন চার্জ (Phone)">📱 ফোন</span>
+            <div class="stat-bar"><div id="bar-phone" class="stat-fill phone" style="width: 68%"></div></div>
+            <span id="val-phone" class="stat-val">68%</span>
+          </div>
+        </div>
+        <div class="quick-tools">
+          <button id="btn-toggle-audio" class="icon-btn" title="সাউন্ড চালু/বন্ধ (Mute Audio)">🔊</button>
+          <button id="btn-pause" class="icon-btn" title="বিরতি / মেনু (Pause - ESC)">⏸️</button>
+        </div>
+      </div>
+
+      <!-- Inventory / Buff Strip -->
+      <div id="status-badges"></div>
+
+      <!-- Toast Notifications -->
+      <div id="toast-container"></div>
+
+      <!-- Contextual Interaction Prompt & Clickable Action Bar -->
+      <div id="interaction-area">
+        <div id="interact-prompt" class="hidden">
+          <span class="key-badge">E</span>
+          <span id="interact-prompt-text">কাজ করুন</span>
+        </div>
+        <div id="action-buttons-bar"></div>
+      </div>
+
+      <!-- Mobile / Touch Virtual Controls -->
+      <div id="mobile-controls">
+        <div id="joystick-zone" aria-label="Movement Joystick">
+          <div id="joystick-base">
+            <div id="joystick-stick"></div>
+          </div>
+        </div>
+        <div id="mobile-right-buttons">
+          <button id="btn-mobile-run" class="touch-btn" aria-label="Speed Mode">🚶<small>হাঁটা</small></button>
+          <button id="btn-mobile-interact" class="touch-btn primary" aria-label="Interact">✋<small>কাজ (E)</small></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dialogue / Tong Dokan Modal -->
+    <div id="dialogue-modal" class="modal-overlay hidden">
+      <div class="modal-card dialogue-card">
+        <div class="dialogue-header">
+          <div class="npc-avatar" id="dialogue-avatar">🍵</div>
+          <div>
+            <h3 id="dialogue-name">রফিক মামা</h3>
+            <p id="dialogue-role" class="subtitle">টং দোকানদার • Tea Stall Owner</p>
+          </div>
+          <button id="btn-close-dialogue" class="close-btn" aria-label="Close">✕</button>
+        </div>
+        <div id="dialogue-text" class="dialogue-body"></div>
+        <div id="dialogue-actions" class="dialogue-actions"></div>
+      </div>
+    </div>
+
+    <!-- Full Map Modal -->
+    <div id="fullmap-modal" class="modal-overlay hidden">
+      <div class="modal-card fullmap-card">
+        <div class="modal-header">
+          <h3>🗺️ পাড়ার মানচিত্র — Expanded Neighborhood Map</h3>
+          <button id="btn-close-fullmap" class="close-btn" aria-label="Close">✕</button>
+        </div>
+        <div class="fullmap-toolbar">
+          <div class="map-zoom-group">
+            <button id="btn-map-zoom-in" class="map-tool-btn" title="Zoom In (বড় করুন)">➕</button>
+            <button id="btn-map-zoom-out" class="map-tool-btn" title="Zoom Out (ছোট করুন)">➖</button>
+            <button id="btn-map-reset" class="map-tool-btn" title="Reset View (পুনরায় সেট)">⟲</button>
+          </div>
+          <span class="map-hint-text">🖱️ স্ক্রল বা চিমটি দিয়ে জুম ও ড্র্যাগ করুন • যেকোনো স্থানে ট্যাপ করে বিস্তারিত দেখুন</span>
+        </div>
+        <div class="fullmap-viewport">
+          <canvas id="fullmap-canvas" width="600" height="470"></canvas>
+          
+          <!-- Interactive Location Information Panel -->
+          <div id="map-location-panel" class="location-panel hidden">
+            <div class="location-panel-header">
+              <span id="loc-panel-icon" class="loc-panel-icon">🏠</span>
+              <div class="loc-panel-titles">
+                <h4 id="loc-panel-name-bn">মেস রুম</h4>
+                <div class="loc-sub-row">
+                  <span id="loc-panel-name-en" class="loc-sub-en">Mess Room</span>
+                  <span id="loc-panel-category" class="loc-panel-badge">আবাসিক</span>
+                </div>
+              </div>
+              <button id="btn-close-location-panel" class="loc-panel-close" aria-label="Close Panel">✕</button>
+            </div>
+            <p id="loc-panel-desc" class="loc-panel-desc">আপনার মেস রুম। এখানে বিছানা, পড়ার টেবিল, মোমবাতি ও চার্জার ফ্যান আছে।</p>
+            <div class="loc-panel-meta">
+              <div class="loc-meta-item">
+                <span class="meta-label">📍 বিশ্ব স্থানাঙ্ক (Coords)</span>
+                <span id="loc-panel-coords" class="meta-val">X: -10.0, Z: -10.5</span>
+              </div>
+              <div class="loc-meta-item">
+                <span class="meta-label">📏 দূরত্ব (Distance)</span>
+                <span id="loc-panel-distance" class="meta-val">0.0 m</span>
+              </div>
+              <div class="loc-meta-item">
+                <span class="meta-label">🚪 অবস্থা (Status)</span>
+                <span id="loc-panel-access" class="meta-val meta-access-yes">উন্মুক্ত (Accessible)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="map-legend">
+          <span><i class="dot dot-player"></i> আপনি (You)</span>
+          <span><i class="dot dot-mess"></i> মেস (Mess)</span>
+          <span><i class="dot dot-tong"></i> টং দোকান (Tong)</span>
+          <span><i class="dot dot-shop"></i> দোকান (Shops)</span>
+          <span><i class="dot dot-npc"></i> মানুষজন (NPCs)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pause Menu Modal -->
+    <div id="pause-modal" class="modal-overlay hidden">
+      <div class="modal-card pause-card">
+        <h2>⏸️ গেম বিরতি — Paused</h2>
+        <p class="subtitle">আমার বাংলাদেশ • 3D Bangladeshi Life Simulator</p>
+        <div class="pause-actions">
+          <button id="btn-resume" class="btn-primary">▶️ খেলা চালিয়ে যান (Resume)</button>
+          <button id="btn-save-now" class="btn-secondary">💾 সেভ করুন (Save Progress)</button>
+          <button id="btn-toggle-touch-ui" class="btn-secondary">📱 টাচ কন্ট্রোল দেখান/লুকান (Toggle Touch UI)</button>
+          <button id="btn-reset-save" class="btn-danger">🔄 নতুন করে শুরু করুন (Reset Save)</button>
+        </div>
+        <div class="controls-mini-guide">
+          <div><strong>PC:</strong> W/A/S/D চলুন • Shift দৌড় • Mouse ড্র্যাগ ক্যামেরা • E কাজ • M ম্যাপ • ESC বিরতি</div>
+          <div><strong>Mobile:</strong> বাম জয়স্টিক চলুন • স্ক্রিন ড্র্যাগ ক্যামেরা • নিচের বাটনে ট্যাপ করুন</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Start / Title Screen Overlay -->
+    <div id="start-screen" class="start-overlay">
+      <div class="start-card">
+        <div class="bd-badge">🇧🇩 বাংলা ৩ডি লাইফ সিমুলেটর</div>
+        <h1>আমার বাংলাদেশ</h1>
+        <p class="start-sub">AMAR BANGLADESH — 3D LIFE SIMULATOR</p>
+        <p class="start-desc">
+          প্রাণবন্ত একটি বাংলাদেশি পাড়া — নিজের মেস রুমে থাকুন, প্রাকৃতিক দিন-রাত, বৃষ্টি ও লোডশেডিংয়ের অভিজ্ঞতা নিন, পাড়ার রাস্তাঘাট ও টং দোকান ঘুরে দেখুন এবং প্রতিবেশীদের সাথে আড্ডা দিন।
+        </p>
+        <div class="start-buttons">
+          <button id="btn-play" class="btn-primary large">🎮 খেলা শুরু করুন (Play)</button>
+          <button id="btn-continue" class="btn-secondary large hidden">📂 আগের গেম চালিয়ে যান (Continue)</button>
+        </div>
+        <div class="start-hints">
+          <span><strong>W A S D</strong> হাঁটা</span>
+          <span><strong>Shift</strong> দৌড়</span>
+          <span><strong>Mouse</strong> ক্যামেরা</span>
+          <span><strong>E</strong> ইন্টারঅ্যাক্ট</span>
+          <span><strong>M</strong> ফুল ম্যাপ</span>
+          <span><strong>ESC</strong> পজ</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

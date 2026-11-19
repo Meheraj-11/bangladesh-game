@@ -1,0 +1,19 @@
+{
+  "name": "amar-bangladesh-3d",
+  "version": "1.0.0",
+  "description": "Amar Bangladesh - Mini 3D Bangladeshi Life Simulator",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.170.0",
+    "typescript": "^5.6.3",
+    "vite": "^6.0.3"
+  }
+}
